@@ -111,12 +111,57 @@ $ curl :5000/categories/1/
 
 ```
 
+## Derived Fields
+
+We can specify some fields that don't correspond to any columns in the
+database, but that should still be included in the serialized JSON output of
+the resource.
+
+This is done through the `derived_fields` class attribute on the resource
+class, which should be a dictionary with keys being the field names and values
+the (marshmallow) field types.
+
+### Example
+
+```python
+from flask_sqla_api.constants import FieldType
+
+class Category(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(), nullable=False)
+
+    derived_fields = {
+        'enthusiastic_name': FieldType.String,
+        'is_long_name': FieldType.Boolean,
+    }
+
+    @property
+    def enthusiastic_name(self):
+        return self.name + '!!!'
+
+    @property
+    def is_long_name(self):
+        return len(self.name) > 12
+```
+
+```bash
+$ curl :5000/categories/1/
+{
+    "id": 1,
+    "href": "http://localhost:5000/categories/1/",
+    "name": "Furniture",
+    "enthusiastic_name": "Furniture!!!"
+    "is_long_name": false,
+    "items": [1]
+}
+```
+
 
 ## Dependencies
 
 This library depends on [Flask][], [flask-marshmallow][], and
 [marshmallow-sqlalchemy][]. They should be automatically installed when
-installing Flask-SQLA-API through `pip`/`setup.py`.
+installing Flask-SQLA-API with `pip` or `setup.py`.
 
 [Flask]: http://flask.pocoo.org
 [flask-marshmallow]: https://flask-marshmallow.readthedocs.org
