@@ -33,23 +33,15 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 db = SQLAlchemy(app)
 
-categories = db.Table('categories',
-    db.Column('category_id', db.Integer, db.ForeignKey('category.id')),
-    db.Column('item_id', db.Integer, db.ForeignKey('item.id'))
-)
-
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(), nullable=False)
-    categories = db.relationship(
-        'Category',
-        secondary=categories,
-        backref=db.backref('items', lazy='dynamic'),
-    )
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
 
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(), nullable=False)
+    items = db.relationship('Item', backref='category', lazy='dynamic')
 ```
 
 Then we can expose REST-ish API endpoints at `/items/` and `/categories/` by
@@ -82,7 +74,7 @@ $ curl -X POST :5000/items/ -H "Content-Type: application/json" -d '{"name": "Ch
     "id": 1,
     "href": "http://localhost:5000/items/1/",
     "name": "Chair",
-    "categories": []
+    "category": null
 }
 
 $ curl -X POST :5000/categories/ -H "Content-Type: application/json" -d '{"name": "Furniture"}'
@@ -93,12 +85,12 @@ $ curl -X POST :5000/categories/ -H "Content-Type: application/json" -d '{"name"
     "items": []
 }
 
-$ curl -X PUT :5000/items/1/ -H "Content-Type: application/json" -d '{"categories": [1]}'
+$ curl -X PUT :5000/items/1/ -H "Content-Type: application/json" -d '{"category": 1}'
 {
     "id": 1,
     "href": "http://localhost:5000/items/1/",
     "name": "Chair",
-    "categories": [1]
+    "categories": 1
 }
 
 $ curl :5000/categories/1/
@@ -111,17 +103,19 @@ $ curl :5000/categories/1/
 
 ```
 
-## Derived Fields
+## Additional Features
+
+### Derived Fields
 
 We can specify some fields that don't correspond to any columns in the
 database, but that should still be included in the serialized JSON output of
 the resource.
 
-This is done through the `derived_fields` class attribute on the resource
-class, which should be a dictionary with keys being the field names and values
-the (marshmallow) field types.
+This is done through the `derived_fields` attribute on the resource class,
+which should be a dictionary with keys being the field names and values the
+(marshmallow) field types.
 
-### Example
+#### Example
 
 ```python
 from flask_sqla_api.constants import FieldType
@@ -129,6 +123,7 @@ from flask_sqla_api.constants import FieldType
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(), nullable=False)
+    items = db.relationship('Item', backref='category', lazy='dynamic')
 
     derived_fields = {
         'enthusiastic_name': FieldType.String,
@@ -153,6 +148,55 @@ $ curl :5000/categories/1/
     "enthusiastic_name": "Furniture!!!"
     "is_long_name": false,
     "items": [1]
+}
+```
+
+### Nested Fields
+
+We can specify some related fields that should be nested (i.e. inlined) in the
+serialized output.
+
+This is done through the `nested_fields` attribute on the resource class, which
+should be a dictionary with keys being the field names and values configuration
+dictionaries.
+
+These configuration dictionaries should have a key `resource_name` with the
+class name of the nested resource as a value, and optionally some keyword
+arguments for the `marshmallow.fields.Nested` constructor, like `many` or
+`exclude`.
+
+Note that loading resources with nested fields from data (for example, when
+making a `PUT` request) won't work if including a collection of nested fields.
+
+
+#### Example
+
+```python
+class Item(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
+
+    nested_fields = {
+        'category': {
+            'resource_name': 'Category',
+            'many': False,
+            'exclude': ['items'],
+        },
+    }
+```
+
+```bash
+$ curl :5000/items/1/
+{
+  "id": 1,
+  "href": "http://:5000/items/1/",
+  "name": "Chair",
+  "category": {
+    "id": 1,
+    "href": "http://:5000/categories/1/",
+    "name": "Furniture"
+  }
 }
 ```
 

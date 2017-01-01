@@ -31,7 +31,7 @@ class Api:
             self._register_resource(model, endpoint)
 
     def _register_resource(self, model, endpoint):
-        resource_name = model.__tablename__.title()
+        resource_name = model.__tablename__.title().replace('_', '')
 
         schema_meta = type(
             '{}SchemaMeta'.format(resource_name),
