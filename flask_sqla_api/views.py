@@ -32,11 +32,7 @@ class BaseAPIView(MethodView):
     def get(self, id=None):
         if id is None:
             all_items = self.model.query.all()
-
-            # We can't use self.schema.jsonify directly since top-level arrays
-            # in JSON aren't supported in Flask
-            output = self.schema_cls(many=True).dump(all_items).data
-            return json_response(output)
+            return self.schema_cls(many=True).jsonify(all_items)
         else:
             item = self.model.query.get(id)
             if item is None:

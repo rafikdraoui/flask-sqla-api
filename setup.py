@@ -17,7 +17,7 @@ setup(
     description=short_description,
     long_description=long_description,
     install_requires=[
-        'Flask',
+        'Flask>=0.12',
         'flask-marshmallow',
         'marshmallow-sqlalchemy',
     ],
