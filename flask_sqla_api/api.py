@@ -35,17 +35,15 @@ class Api:
         resource_name = model.__tablename__.title().replace("_", "")
 
         schema_meta = type(
-            "{}SchemaMeta".format(resource_name),
+            f"{resource_name}SchemaMeta",
             (BaseSchema.Meta,),
             {"model": model, "sqla_session": self.db.session},
         )
 
-        schema = type(
-            "{}Schema".format(resource_name), (BaseSchema,), {"Meta": schema_meta}
-        )
+        schema = type(f"{resource_name}Schema", (BaseSchema,), {"Meta": schema_meta},)
 
         view = type(
-            "{}API".format(resource_name),
+            f"{resource_name}API",
             (BaseAPIView,),
             {"model": model, "schema_cls": schema, "db": self.db},
         )
@@ -53,7 +51,8 @@ class Api:
         self._register_endpoint(view, endpoint)
 
     def _register_endpoint(self, view, url):
-        base_endpoint = "{}_api".format(view.model.__tablename__)
+        model_name = view.model.__tablename__
+        base_endpoint = f"{model_name}_api"
 
         index_endpoint = base_endpoint + "/index"
         self.app.add_url_rule(
@@ -74,7 +73,7 @@ class Api:
 
         show_endpoint = base_endpoint + "/show"
         self.app.add_url_rule(
-            "{url}<int:id>/".format(url=url),
+            f"{url}<int:id>/",
             view_func=view.as_view(show_endpoint),
             methods=["GET", "PUT", "DELETE"],
             endpoint=show_endpoint,

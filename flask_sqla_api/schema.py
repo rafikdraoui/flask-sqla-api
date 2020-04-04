@@ -24,7 +24,8 @@ class BaseSchema(ModelSchema):
         super().__init__(*args, **kwargs)
 
     def add_href_field(self):
-        endpoint = "{}_api/show".format(self.Meta.model.__tablename__)
+        model_name = self.Meta.model.__tablename__
+        endpoint = f"{model_name}_api/show"
         url_field = AbsoluteURLFor(endpoint, id="<id>")
         self._declared_fields["href"] = url_field
 
@@ -44,7 +45,7 @@ class BaseSchema(ModelSchema):
 
         for field_name, config in model.nested_fields.items():
             resource_name = config["resource_name"]
-            schema_name = "{}Schema".format(resource_name)
+            schema_name = f"{resource_name}Schema"
             self._declared_fields[field_name] = fields.Nested(schema_name, **config)
 
     @pre_load()
@@ -84,10 +85,12 @@ class BaseSchema(ModelSchema):
             related_model = related_schema.Meta.model
 
             if config["many"]:
+                model_name = model.__name__
+                related_model_name = related_model.__name__
                 error_msg = (
-                    "Cannot update relationship through the `{model}` model. "
-                    "An alternative is to direclty manipulate `{related_model}` objects."
-                ).format(model=model.__name__, related_model=related_model.__name__)
+                    f"Cannot update relationship through the `{model_name}` model. "
+                    f"An alternative is to direclty manipulate `{related_model_name}` objects."
+                )
                 raise ValidationError(error_msg, field_names=[field_name])
 
             pk = data[field_name]
@@ -103,4 +106,4 @@ class BaseSchema(ModelSchema):
     def check_unknown_fields(self, data, original_data):
         for key in original_data:
             if key not in self.fields:
-                raise ValidationError("Unknown field name {}".format(key))
+                raise ValidationError(f"Unknown field name {key}")
