@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "flask-sqla-api"
+version = "0.2.0"
+description = "Simple API wrapper for SQLAlchemy models in Flask"
+authors = ["Rafik Draoui <rafik@rafik.ca>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/rafikdraoui/flask-sqla-api"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+flask-marshmallow = {version = "^0.11.0", extras = ["sqlalchemy"]}
+marshmallow = "^2.21"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
