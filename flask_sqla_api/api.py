@@ -1,3 +1,5 @@
+from functools import partial
+
 from .schema import BaseSchema
 from .views import BaseAPIView, api_error
 
@@ -21,7 +23,7 @@ class Api:
 
     def add_error_handlers(self):
         for status_code in (400, 405, 500):
-            self.app.errorhandler(status_code)(lambda _: api_error(status_code))
+            self.app.errorhandler(status_code)(partial(api_error, status_code))
 
     def register_resource(self, model, endpoint):
         if self.app is None or self.db is None:

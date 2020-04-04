@@ -92,7 +92,7 @@ class BaseSchema(ModelSchema):
 
             pk = data[field_name]
             related = related_model.query.get(pk)
-            related_data, errors = related_schema().dump(related)
+            related_data, _ = related_schema().dump(related)
             for k in related_field.exclude:
                 related_data.pop(k)
             data[field_name] = related_data

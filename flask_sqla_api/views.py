@@ -1,5 +1,9 @@
+# pylint: disable=redefined-builtin
+
 from flask import json, make_response, request
 from flask.views import MethodView
+from marshmallow.exceptions import ValidationError
+from werkzeug.exceptions import BadRequest
 
 
 def json_response(data, status_code=200):
@@ -41,9 +45,14 @@ class BaseAPIView(MethodView):
     def post(self):
         try:
             data = request.get_json()
+        except BadRequest:
+            return api_error(400, message="Cannot parse JSON")
+
+        try:
             new_item, errors = self.schema.load(data)
-        except:
-            return api_error(400)
+        except ValidationError as e:
+            return api_error(400, payload=e.messages)
+
         if errors:
             return api_error(400, payload=errors)
 
@@ -66,9 +75,14 @@ class BaseAPIView(MethodView):
 
         try:
             data = request.get_json()
+        except BadRequest:
+            return api_error(400, message="Cannot parse JSON")
+
+        try:
             updated_item, errors = self.schema.load(data, instance=item, partial=True)
-        except:
-            return api_error(400)
+        except ValidationError as e:
+            return api_error(400, payload=e.messages)
+
         if errors:
             return api_error(400, payload=errors)
 
