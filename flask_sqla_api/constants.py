@@ -6,4 +6,5 @@ class _FieldType:
         for field_type in marshmallow.fields.__all__:
             setattr(self, field_type, field_type)
 
+
 FieldType = _FieldType()

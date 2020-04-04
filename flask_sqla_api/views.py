@@ -4,7 +4,7 @@ from flask.views import MethodView
 
 def json_response(data, status_code=200):
     response = make_response(json.dumps(data))
-    response.headers['Content-Type'] = 'application/json'
+    response.headers["Content-Type"] = "application/json"
     response.status_code = status_code
     return response
 
@@ -12,20 +12,19 @@ def json_response(data, status_code=200):
 def api_error(status_code, message=None, payload=None):
 
     message_mapping = {
-        400: 'Bad Request',
-        404: 'Not Found',
-        405: 'Method Not Allowed',
-        500: 'Internal Server Error',
+        400: "Bad Request",
+        404: "Not Found",
+        405: "Method Not Allowed",
+        500: "Internal Server Error",
     }
-    message = message or message_mapping.get(status_code, 'Error')
-    data = {'message': message}
+    message = message or message_mapping.get(status_code, "Error")
+    data = {"message": message}
     if payload:
-        data['details'] = payload
+        data["details"] = payload
     return json_response(data, status_code=status_code)
 
 
 class BaseAPIView(MethodView):
-
     def __init__(self):
         self.schema = self.schema_cls()
 
@@ -57,7 +56,7 @@ class BaseAPIView(MethodView):
 
         response = self.schema.jsonify(new_item)
         response.status_code = 201
-        response.headers['Location'] = output['href']
+        response.headers["Location"] = output["href"]
         return response
 
     def put(self, id):
@@ -84,4 +83,4 @@ class BaseAPIView(MethodView):
             return api_error(404)
         self.db.session.delete(item)
         self.db.session.commit()
-        return ''
+        return ""

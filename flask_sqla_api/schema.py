@@ -1,11 +1,11 @@
 from flask_marshmallow.fields import AbsoluteURLFor
 from flask_marshmallow.sqla import ModelSchema
 from marshmallow import (
+    ValidationError,
     class_registry,
     fields,
     pre_load,
     validates_schema,
-    ValidationError,
 )
 
 
@@ -24,13 +24,13 @@ class BaseSchema(ModelSchema):
         super().__init__(*args, **kwargs)
 
     def add_href_field(self):
-        endpoint = '{}_api/show'.format(self.Meta.model.__tablename__)
-        url_field = AbsoluteURLFor(endpoint, id='<id>')
-        self._declared_fields['href'] = url_field
+        endpoint = "{}_api/show".format(self.Meta.model.__tablename__)
+        url_field = AbsoluteURLFor(endpoint, id="<id>")
+        self._declared_fields["href"] = url_field
 
     def add_derived_fields(self):
         model = self.Meta.model
-        if not hasattr(model, 'derived_fields'):
+        if not hasattr(model, "derived_fields"):
             return
 
         for field_name, field_type in model.derived_fields.items():
@@ -39,12 +39,12 @@ class BaseSchema(ModelSchema):
 
     def add_nested_fields(self):
         model = self.Meta.model
-        if not hasattr(model, 'nested_fields'):
+        if not hasattr(model, "nested_fields"):
             return
 
         for field_name, config in model.nested_fields.items():
-            resource_name = config['resource_name']
-            schema_name = '{}Schema'.format(resource_name)
+            resource_name = config["resource_name"]
+            schema_name = "{}Schema".format(resource_name)
             self._declared_fields[field_name] = fields.Nested(schema_name, **config)
 
     @pre_load()
@@ -68,7 +68,7 @@ class BaseSchema(ModelSchema):
         }
         """
         model = self.Meta.model
-        if not hasattr(model, 'nested_fields'):
+        if not hasattr(model, "nested_fields"):
             return data
 
         for field_name, config in model.nested_fields.items():
@@ -83,14 +83,11 @@ class BaseSchema(ModelSchema):
             related_schema = class_registry.get_class(related_field.nested)
             related_model = related_schema.Meta.model
 
-            if config['many']:
+            if config["many"]:
                 error_msg = (
-                    'Cannot update relationship through the `{model}` model. '
-                    'An alternative is to direclty manipulate `{related_model}` objects.'
-                ).format(
-                    model=model.__name__,
-                    related_model=related_model.__name__,
-                )
+                    "Cannot update relationship through the `{model}` model. "
+                    "An alternative is to direclty manipulate `{related_model}` objects."
+                ).format(model=model.__name__, related_model=related_model.__name__)
                 raise ValidationError(error_msg, field_names=[field_name])
 
             pk = data[field_name]
@@ -106,4 +103,4 @@ class BaseSchema(ModelSchema):
     def check_unknown_fields(self, data, original_data):
         for key in original_data:
             if key not in self.fields:
-                raise ValidationError('Unknown field name {}'.format(key))
+                raise ValidationError("Unknown field name {}".format(key))
